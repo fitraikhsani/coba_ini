@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>ISAN PUNYA - No PopUp Manual Engine</title>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --accent: #7000ff;
+            --bg: #0d1117;
+            --card: #161b22;
+            --text: #c9d1d9;
+        }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container { 
+            width: 100%; 
+            max-width: 500px; 
+            background: var(--card);
+            padding: 30px; 
+            border-radius: 24px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            border: 1px solid #30363d;
+            text-align: center;
+        }
+        h2 { color: var(--primary); margin: 0 0 5px 0; letter-spacing: 2px; }
+        .tagline { font-size: 11px; color: #8b949e; margin-bottom: 25px; text-transform: uppercase; }
+
+        /* Grid Input Manual */
+        .config-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 15px; 
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 15px;
+        }
+        .input-group { display: flex; flex-direction: column; text-align: left; }
+        label { font-size: 10px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        input { 
+            background: #010409; 
+            border: 1px solid #30363d; 
+            color: white; 
+            padding: 10px; 
+            border-radius: 8px; 
+            outline: none;
+        }
+
+        /* Status Panel */
+        .status-panel { 
+            background: #010409; 
+            padding: 20px; 
+            border-radius: 15px; 
+            margin-bottom: 25px;
+            border: 1px solid #21262d;
+        }
+        .current-task { font-size: 14px; font-weight: 500; color: #fff; margin-bottom: 15px; min-height: 20px; }
+        .bar-bg { background: #30363d; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 10px; }
+        .bar-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; height: 100%; transition: 0.5s; }
+        
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            border-radius: 12px; 
+            border: none; 
+            transition: 0.3s; 
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+        #start-btn { background: var(--primary); color: #000; }
+        #stop-btn { background: #da3633; color: white; display: none; }
+
+        .note { font-size: 10px; color: #484f58; margin-top: 15px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ISAN PUNYA</h2>
+    <div class="tagline">No Pop-Up Engine (Manual Config)</div>
+
+    <div class="config-grid" id="config-ui">
+        <div class="input-group">
+            <label>JML PENCARIAN</label>
+            <input type="number" id="l-s" value="10">
+        </div>
+        <div class="input-group">
+            <label>DELAY CARI (DETIK)</label>
+            <input type="number" id="d-s" value="7">
+        </div>
+        <div class="input-group">
+            <label>JML BACA BERITA</label>
+            <input type="number" id="l-n" value="10">
+        </div>
+        <div class="input-group">
+            <label>DELAY BACA (DETIK)</label>
+            <input type="number" id="d-n" value="10">
+        </div>
+    </div>
+
+    <div class="status-panel">
+        <div id="stat" class="current-task">SILAKAN ATUR & START</div>
+        <div class="bar-bg"><div id="fill" class="bar-fill"></div></div>
+        <div id="cnt-text" style="font-size: 11px; color: var(--primary);">0 / 0 Tasks Done</div>
+    </div>
+
+    <button id="start-btn">START ENGINE</button>
+    <button id="stop-btn">STOP BOT</button>
+
+    <div class="note">
+        <b>SISTEM KERJA:</b> Bot akan berpindah halaman di tab yang sama (Bypass blokir aplikasi). 
+        Pastikan tidak menutup tab selama proses berjalan.
+    </div>
+</div>
+
+<script>
+    const KEYWORDS = ["Berita Medan", "AHP GIS Medan Tembung", "Wisata Sumut", "Harga Emas", "Teknologi 2026", "Mobile Legend", "bola indonesia"];
+    
+    const HARD_ARTICLES = [
+        "https://www.msn.com/id-id/berita/other/awalnya-cuma-iseng-janjian-40-hari-syahnaz-sadiqah-ungkap-ketakutan-ini-jika-lepas-hijab/ar-AA22WWCR",
+        "https://www.msn.com/id-id/hiburan/berita/sinopsis-film-dokumenter-pesta-babi-viral-usai-nobarnya-dibubarkan/ar-AA22Y4xE",
+        "https://www.msn.com/id-id/berita/other/usulan-nama-dari-ahmad-dhani-ditolak-alyssa-daguise-al-ghazali-beri-nama-soleil-zephora-ghazali/ar-AA22S081",
+        "https://www.msn.com/id-id/ekonomi/bisnis/purbaya-beri-waktu-6-bulan-wni-bawa-pulang-harta-dari-luar/ar-AA22Y8H8",
+        "https://www.msn.com/id-id/ekonomi/ekonomi/kronologi-ponpes-pati-modusi-santri-kabur-berpindah-sampai-izin-ponpes-dicabut/ar-AA22XAhc",
+        "https://www.msn.com/id-id/berita/other/nunggak-biaya-seragam-rp-300-ribu-2-siswa-ma-di-padang-dikeluarkan-dari-sekolah/ar-AA22Upk5",
+        "https://www.msn.com/id-id/berita/other/sosok-jaka-pernah-dipenjara-7-tahun-karena-bunuh-istri-kini-istri-ke-7-juga-tewas-di-tangannya/ar-AA22XbnI",
+        "https://www.msn.com/id-id/berita/other/kata-marc-marquez-usai-jalani-operasi-kaki-dan-bahu-kanan-kapan-akan-comeback/ar-AA22WXg1",
+        "https://www.msn.com/id-id/berita/other/orang-yang-semakin-cantik-secara-fisik-seiring-bertambahnya-usia-biasanya-mempraktikkan-7-kebiasaan-harian-ini-menurut-psikologi/ar-AA21JK92",
+        "https://www.msn.com/id-id/hiburan/berita/5-film-horor-underrated-bergaya-stephen-king-bikin-merinding/ar-AA22XNTb",
+        "https://www.msn.com/id-id/berita/other/harga-buyback-emas-antam-ubs-galeri-24-di-pegadaian-hari-ini-senin-11-mei-2026/ar-AA22RHnA",
+        "https://www.msn.com/id-id/ekonomi/other/purbaya-bantah-pertumbuhan-ekonomi-5-61-persen-karena-efek-basis-rendah/ar-AA22Txxu",
+        "https://www.msn.com/id-id/berita/other/bandar-judol-di-jakbar-diburu-polri-incar-sosok-bos-besar-penggerak-321-wna-di-indonesia/vi-AA22TLcO",
+        "https://www.msn.com/id-id/berita/nasional/sempat-terjatuh-ke-jurang-mahasiswa-itb-hilang-di-gunung-puntang-ditemukan-selamat/ar-AA22UJRX",
+        "https://www.msn.com/id-id/video/berita/viral-aksi-warga-halang-halangi-ambulans-di-depok-pelaku-berhasil-diamankan-polisi/vi-AA22UPGs",
+        "https://www.msn.com/id-id/berita/other/pemandu-warga-singapura-saat-gunung-dukono-erupsi-saya-ingin-sujud-di-kaki-orang-tuanya-untuk-minta-maaf/ar-AA22XlBH",
+        "https://www.msn.com/id-id/berita/other/orang-yang-selalu-mengatakan-izin-mohon-maaf-mengganggu-sebelum-meminta-sesuatu-memiliki-7-ciri-kepribadian-yang-sama-menurut-psikologi/ar-AA1Vuwsr",
+        "https://www.msn.com/id-id/berita/other/kronologi-pondok-pesantren-di-lampung-dibakar-massa-hingga-1-orang-diamankan-ternyata-masalah-ini-jadi-pemicunya/ar-AA22T5B9",
+        "https://www.msn.com/id-id/ekonomi/ekonomi/polisi-bongkar-dugaan-penadahan-ribuan-sepeda-motor-di-jaksel/ar-AA22UlQy"
+    ];
+
+    function start() {
+        // Ambil nilai dari input manual
+        const ls = parseInt(document.getElementById('l-s').value);
+        const ds = parseInt(document.getElementById('d-s').value) * 1000;
+        const ln = parseInt(document.getElementById('l-n').value);
+        const dn = parseInt(document.getElementById('d-n').value) * 1000;
+
+        const sessionData = {
+            isRunning: true,
+            phase: 'search',
+            count: 0,
+            maxSearch: ls,
+            delaySearch: ds,
+            maxRead: ln,
+            delayRead: dn
+        };
+        localStorage.setItem('isan_manual_session', JSON.stringify(sessionData));
+        runEngine();
+    }
+
+    function runEngine() {
+        let data = JSON.parse(localStorage.getItem('isan_manual_session'));
+        if (!data || !data.isRunning) return;
+
+        let total = data.maxSearch + data.maxRead;
+        
+        if (data.phase === 'search') {
+            if (data.count < data.maxSearch) {
+                let kw = KEYWORDS[data.count % KEYWORDS.length];
+                data.count++;
+                localStorage.setItem('isan_manual_session', JSON.stringify(data));
+                
+                window.location.href = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
+            } else {
+                data.phase = 'read';
+                data.count = 0;
+                localStorage.setItem('isan_manual_session', JSON.stringify(data));
+                setTimeout(runEngine, 1000);
+            }
+        } else if (data.phase === 'read') {
+            if (data.count < data.maxRead) {
+                let link = HARD_ARTICLES[data.count % HARD_ARTICLES.length];
+                data.count++;
+                localStorage.setItem('isan_manual_session', JSON.stringify(data));
+                
+                window.location.href = link;
+            } else {
+                finish();
+            }
+        }
+    }
+
+    function updateUI() {
+        let data = JSON.parse(localStorage.getItem('isan_manual_session'));
+        if (!data) return;
+
+        let total = data.maxSearch + data.maxRead;
+        let current = data.phase === 'search' ? data.count : data.maxSearch + data.count;
+        
+        document.getElementById('config-ui').style.opacity = "0.3";
+        document.getElementById('config-ui').style.pointerEvents = "none";
+        document.getElementById('stat').innerText = data.phase === 'search' ? "🔎 SEDANG MENCARI DI BING..." : "📖 SEDANG MEMBACA ARTIKEL...";
+        document.getElementById('cnt-text').innerText = `${current} / ${total} TASKS COMPLETED`;
+        document.getElementById('fill').style.width = (current / total * 100) + "%";
+        document.getElementById('start-btn').innerText = "ENGINE RUNNING...";
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('stop-btn').style.display = "block";
+    }
+
+    function finish() {
+        localStorage.removeItem('isan_manual_session');
+        alert("Misi Selesai! Semua tugas telah dikerjakan.");
+        location.reload();
+    }
+
+    function stop() {
+        localStorage.removeItem('isan_manual_session');
+        location.reload();
+    }
+
+    document.getElementById('start-btn').onclick = start;
+    document.getElementById('stop-btn').onclick = stop;
+
+    window.onload = function() {
+        const data = JSON.parse(localStorage.getItem('isan_manual_session'));
+        if (data && data.isRunning) {
+            updateUI();
+            let currentDelay = data.phase === 'search' ? data.delaySearch : data.delayRead;
+            setTimeout(runEngine, currentDelay);
+        }
+    };
+</script>
+</body>
+</html>
