@@ -3,162 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISAN PUNYA - No PopUp Engine</title>
+    <title>ISAN PUNYA - Iframe Control Engine</title>
     <style>
-        :root {
-            --primary: #00f2ff;
-            --accent: #7000ff;
-            --bg: #0d1117;
-            --card: #161b22;
-            --text: #c9d1d9;
-        }
-        body { 
-            background: var(--bg); color: var(--text); 
-            font-family: 'Segoe UI', sans-serif; 
-            display: flex; justify-content: center; align-items: center; 
-            min-height: 100vh; margin: 0; padding: 20px;
-        }
-        .container { 
-            width: 100%; max-width: 450px; background: var(--card);
-            padding: 30px; border-radius: 24px; text-align: center;
-            border: 1px solid #30363d; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-        h2 { color: var(--primary); margin: 0; letter-spacing: 2px; }
-        .tagline { font-size: 11px; color: #8b949e; margin-bottom: 25px; text-transform: uppercase; }
-
-        .config-grid { 
-            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
-            margin-bottom: 25px; background: rgba(255,255,255,0.03);
-            padding: 15px; border-radius: 15px;
-        }
-        .input-group { display: flex; flex-direction: column; text-align: left; }
-        label { font-size: 10px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
-        input { 
-            background: #010409; border: 1px solid #30363d; 
-            color: white; padding: 10px; border-radius: 8px; outline: none;
-        }
-
-        .status-panel { 
-            background: #010409; padding: 20px; border-radius: 15px; 
-            margin-bottom: 25px; border: 1px solid #21262d;
-        }
-        .current-task { font-size: 13px; color: #fff; margin-bottom: 10px; min-height: 18px; }
-        .bar-bg { background: #30363d; height: 8px; border-radius: 4px; overflow: hidden; }
-        .bar-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; height: 100%; transition: 0.5s; }
+        :root { --primary: #00f2ff; --accent: #7000ff; --bg: #0d1117; --card: #161b22; }
+        body { background: var(--bg); color: #c9d1d9; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow: hidden; }
         
-        button { 
-            width: 100%; padding: 16px; font-weight: bold; cursor: pointer; 
-            border-radius: 12px; border: none; background: var(--primary); color: #000;
-            text-transform: uppercase; margin-bottom: 10px;
+        /* Dashboard Atas */
+        .dashboard { 
+            height: 45vh; background: var(--card); padding: 15px; 
+            box-sizing: border-box; border-bottom: 2px solid var(--primary);
+            display: flex; flex-direction: column; justify-content: center;
         }
-        #stop-btn { background: #da3633; color: white; display: none; }
+        
+        /* Jendela Bing Bawah */
+        .view-port { height: 55vh; width: 100%; background: white; border: none; }
 
-        .note { font-size: 10px; color: #484f58; margin-top: 15px; line-height: 1.4; }
+        h2 { color: var(--primary); margin: 0 0 10px 0; font-size: 18px; text-align: center; }
+        
+        .config-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; 
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 12px; margin-bottom: 10px;
+        }
+        .input-group { display: flex; flex-direction: column; }
+        label { font-size: 9px; color: var(--primary); font-weight: bold; margin-bottom: 3px; }
+        input { background: #010409; border: 1px solid #30363d; color: white; padding: 6px; border-radius: 5px; font-size: 12px; }
+
+        .status-panel { text-align: center; margin-bottom: 10px; }
+        #msg { font-size: 11px; color: #fff; margin-bottom: 5px; }
+        .bar { width: 100%; background: #30363d; height: 6px; border-radius: 3px; overflow: hidden; }
+        .fill { background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; height: 100%; transition: 0.5s; }
+        
+        .btn-group { display: flex; gap: 10px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 12px; }
+        #start-btn { background: var(--primary); color: #000; }
+        #stop-btn { background: #da3633; color: white; display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="dashboard" id="control-panel">
     <h2>ISAN PUNYA</h2>
-    <div class="tagline">No Pop-Up Engine v3.0</div>
-
-    <div class="config-grid" id="ui-config">
-        <div class="input-group"><label>JUMLAH CARI</label><input type="number" id="s-qty" value="10"></div>
-        <div class="input-group"><label>DELAY CARI (S)</label><input type="number" id="s-del" value="7"></div>
-        <div class="input-group"><label>JUMLAH BACA</label><input type="number" id="r-qty" value="10"></div>
-        <div class="input-group"><label>DELAY BACA (S)</label><input type="number" id="r-del" value="10"></div>
+    
+    <div class="config-grid" id="settings-ui">
+        <div class="input-group">
+            <label>JML CARI</label>
+            <input type="number" id="in-s-qty" value="10">
+        </div>
+        <div class="input-group">
+            <label>DELAY CARI (S)</label>
+            <input type="number" id="in-s-del" value="7">
+        </div>
+        <div class="input-group">
+            <label>JML BACA</label>
+            <input type="number" id="in-r-qty" value="10">
+        </div>
+        <div class="input-group">
+            <label>DELAY BACA (S)</label>
+            <input type="number" id="in-r-del" value="10">
+        </div>
     </div>
 
     <div class="status-panel">
-        <div id="stat-txt" class="current-task">SIAP DIJALANKAN</div>
-        <div class="bar-bg"><div id="bar" class="bar-fill"></div></div>
-        <div id="counter" style="font-size: 11px; margin-top: 10px; color: var(--primary);">0 / 0 Tasks</div>
+        <div id="msg">SIAP JALANKAN</div>
+        <div class="bar"><div id="fill" class="fill"></div></div>
+        <div id="count-info" style="font-size: 10px; margin-top: 5px; color: var(--primary);">0 / 0 Tasks</div>
     </div>
 
-    <button id="start-btn">START ENGINE</button>
-    <button id="stop-btn">STOP BOT</button>
-
-    <div class="note">
-        <b>INFO:</b> Bot ini bekerja di <b>SATU TAB</b>. Dia akan otomatis pindah halaman. 
-        Jangan tutup tab saat bot bekerja.
+    <div class="btn-group">
+        <button id="start-btn" onclick="initBot()">START ENGINE</button>
+        <button id="stop-btn" onclick="stopBot()">STOP</button>
     </div>
 </div>
 
+<iframe id="bot-frame" class="view-port" src="about:blank"></iframe>
+
 <script>
-    const KEYWORDS = ["Berita Medan", "AHP GIS Medan Tembung", "Wisata Sumut", "Harga Emas", "Teknologi 2026", "Informasi Sistem"];
+    const KEYWORDS = ["Berita Medan", "AHP GIS Medan Tembung", "Wisata Sumut", "Harga Emas Antam", "Teknologi 2026", "Informasi Sistem", "Skripsi Isan"];
     const ARTICLES = [
         "https://www.msn.com/id-id/berita/other/ar-AA22WWCR",
         "https://www.msn.com/id-id/hiburan/berita/ar-AA22Y4xE",
         "https://www.msn.com/id-id/berita/other/ar-AA22S081",
-        "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8",
-        "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22XAhc"
+        "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8"
     ];
 
-    function start() {
-        const data = {
-            active: true, phase: 'search', count: 0,
-            maxS: parseInt(document.getElementById('s-qty').value),
-            delS: parseInt(document.getElementById('s-del').value) * 1000,
-            maxR: parseInt(document.getElementById('r-qty').value),
-            delR: parseInt(document.getElementById('r-del').value) * 1000
+    let botData = { running: false, step: 0 };
+
+    function initBot() {
+        botData = {
+            running: true,
+            step: 0,
+            sQty: parseInt(document.getElementById('in-s-qty').value),
+            sDel: parseInt(document.getElementById('in-s-del').value) * 1000,
+            rQty: parseInt(document.getElementById('in-r-qty').value),
+            rDel: parseInt(document.getElementById('in-r-del').value) * 1000
         };
-        localStorage.setItem('isan_bot', JSON.stringify(data));
-        run();
-    }
 
-    function run() {
-        let d = JSON.parse(localStorage.getItem('isan_bot'));
-        if (!d || !d.active) return;
-
-        if (d.phase === 'search') {
-            if (d.count < d.maxS) {
-                let kw = KEYWORDS[d.count % KEYWORDS.length];
-                d.count++;
-                localStorage.setItem('isan_bot', JSON.stringify(d));
-                window.location.href = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
-            } else {
-                d.phase = 'read'; d.count = 0;
-                localStorage.setItem('isan_bot', JSON.stringify(d));
-                setTimeout(run, 1000);
-            }
-        } else {
-            if (d.count < d.maxR) {
-                let link = ARTICLES[d.count % ARTICLES.length];
-                d.count++;
-                localStorage.setItem('isan_bot', JSON.stringify(d));
-                window.location.href = link;
-            } else {
-                localStorage.removeItem('isan_bot');
-                alert("Misi Selesai!");
-                location.reload();
-            }
-        }
-    }
-
-    function updateUI() {
-        let d = JSON.parse(localStorage.getItem('isan_bot'));
-        if(!d) return;
-        let total = d.maxS + d.maxR;
-        let curr = d.phase === 'search' ? d.count : d.maxS + d.count;
-        document.getElementById('ui-config').style.opacity = "0.3";
-        document.getElementById('ui-config').style.pointerEvents = "none";
-        document.getElementById('stat-txt').innerText = d.phase === 'search' ? "🔎 SEARCHING..." : "📖 READING...";
-        document.getElementById('counter').innerText = `${curr} / ${total} Tasks`;
-        document.getElementById('bar').style.width = (curr/total*100) + "%";
+        document.getElementById('settings-ui').style.opacity = "0.3";
+        document.getElementById('settings-ui').style.pointerEvents = "none";
         document.getElementById('start-btn').style.display = "none";
         document.getElementById('stop-btn').style.display = "block";
+        
+        runEngine();
     }
 
-    document.getElementById('start-btn').onclick = start;
-    document.getElementById('stop-btn').onclick = () => { localStorage.removeItem('isan_bot'); location.reload(); };
+    function runEngine() {
+        if (!botData.running) return;
 
-    window.onload = () => {
-        if (localStorage.getItem('isan_bot')) {
-            updateUI();
-            let d = JSON.parse(localStorage.getItem('isan_bot'));
-            setTimeout(run, d.phase === 'search' ? d.delS : d.delR);
+        let total = botData.sQty + botData.rQty;
+        if (botData.step >= total) {
+            finishBot();
+            return;
         }
-    };
+
+        let frame = document.getElementById('bot-frame');
+        let currentUrl = "";
+        let currentDelay = 0;
+
+        if (botData.step < botData.sQty) {
+            // Fase Searching
+            let kw = KEYWORDS[botData.step % KEYWORDS.length];
+            document.getElementById('msg').innerText = `🔎 AUTO SEARCH: ${kw}`;
+            currentUrl = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
+            currentDelay = botData.sDel;
+        } else {
+            // Fase Reading
+            let readIdx = botData.step - botData.sQty;
+            document.getElementById('msg').innerText = `📖 AUTO READING NEWS...`;
+            currentUrl = ARTICLES[readIdx % ARTICLES.length];
+            currentDelay = botData.rDel;
+        }
+
+        frame.src = currentUrl;
+        
+        // Update Progress
+        botData.step++;
+        document.getElementById('count-info').innerText = `${botData.step} / ${total} Tasks Completed`;
+        document.getElementById('fill').style.width = (botData.step / total * 100) + "%";
+
+        // Lanjut otomatis setelah delay
+        setTimeout(runEngine, currentDelay);
+    }
+
+    function stopBot() {
+        botData.running = false;
+        location.reload();
+    }
+
+    function finishBot() {
+        botData.running = false;
+        document.getElementById('msg').innerText = "MISSION ACCOMPLISHED!";
+        alert("Semua tugas selesai, San!");
+        stopBot();
+    }
 </script>
 </body>
 </html>
