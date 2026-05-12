@@ -3,134 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ISAN PUNYA - Sandbox Engine</title>
+    <title>ISAN ANTI-STUCK (5s)</title>
     <style>
-        :root { --primary: #00f2ff; --bg: #0d1117; --card: #161b22; }
-        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; background: var(--bg); }
-
-        /* DASHBOARD DI ATAS (ANTI HILANG) */
-        #top-dashboard {
-            position: absolute; top: 0; left: 0; width: 100%; height: 160px;
-            background: var(--card); border-bottom: 2px solid var(--primary);
-            z-index: 9999; padding: 10px; box-sizing: border-box;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        :root { --primary: #00f2ff; --bg: #0d1117; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: var(--bg); font-family: sans-serif; }
+        
+        /* Dashboard yang dipaksa tetap melayang */
+        #ui-bot {
+            position: fixed; top: 0; left: 0; width: 100%; height: 140px;
+            background: #161b22; border-bottom: 3px solid var(--primary);
+            z-index: 99999; padding: 10px; box-sizing: border-box;
+            box-shadow: 0 5px 20px rgba(0,0,0,1);
         }
 
-        /* JENDELA KONTEN DI BAWAH */
-        #content-frame {
-            position: absolute; top: 160px; left: 0; width: 100%;
-            height: calc(100% - 160px); border: none; background: #fff;
+        #content-area {
+            position: absolute; top: 140px; left: 0; width: 100%;
+            height: calc(100% - 140px); border: none;
         }
 
-        h2 { color: var(--primary); margin: 0; font-size: 16px; text-align: center; font-weight: bold; }
-        
-        .status-area { background: #010409; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #30363d; text-align: center; }
-        #msg { font-size: 12px; color: #fff; font-weight: bold; margin-bottom: 5px; }
-        .bar-bg { width: 100%; background: #333; height: 6px; border-radius: 3px; overflow: hidden; }
-        .bar-fill { background: var(--primary); width: 0%; height: 100%; transition: 0.5s; }
-        
-        button { width: 100%; padding: 10px; margin-top: 10px; background: var(--primary); border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; color: #000; }
+        .status { background: #000; padding: 10px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        #text { font-size: 11px; color: var(--primary); font-weight: bold; }
+        .bar { width: 100%; background: #333; height: 6px; border-radius: 3px; margin-top: 8px; }
+        #fill { background: var(--primary); width: 0%; height: 100%; transition: 0.5s; }
+        button { width: 100%; padding: 10px; margin-top: 8px; background: var(--primary); border: none; font-weight: bold; border-radius: 5px; }
     </style>
 </head>
 <body>
 
-<div id="top-dashboard">
-    <h2>ISAN PUNYA - AUTO PILOT</h2>
-    
-    <div class="status-area">
-        <div id="msg">SIAP DIJALANKAN</div>
-        <div class="bar-bg"><div id="fill" class="bar-fill"></div></div>
-        <div id="info" style="font-size: 10px; color: var(--primary); margin-top: 5px;">Tugas: 0 / 29</div>
+<div id="ui-bot">
+    <div style="text-align: center; color: #fff; font-size: 14px; margin-bottom: 5px;">ISAN AUTO-RUN (5 DETIK)</div>
+    <div class="status">
+        <div id="text">MENUNGGU AKTIVASI...</div>
+        <div class="bar"><div id="fill"></div></div>
     </div>
-
-    <button id="start-btn" onclick="startBot()">START ENGINE</button>
+    <button id="btn" onclick="jalankan()">GASPOL POIN!</button>
 </div>
 
-<iframe id="content-frame" sandbox="allow-scripts allow-same-origin allow-forms" src="about:blank"></iframe>
+<iframe id="content-area" name="bot_frame" sandbox="allow-scripts allow-same-origin allow-forms allow-popups" src="about:blank"></iframe>
 
 <script>
-   const KEYWORDS = [
-    "Berita terbaru Medan Tembung hari ini",
-    "Harga emas Antam Pegadaian Medan",
-    "Contoh jurnal Sistem Pendukung Keputusan 2025",
-    "Cara perhitungan manual metode AHP dan SAW",
-    "Lowongan kerja IT Support Medan",
-    "Peta kepadatan penduduk Sumatera Utara GIS",
-    "Kuliner legendaris di sekitar Jalan Tembung",
-    "Update teknologi Artificial Intelligence 2026",
-    "Jadwal Samsat keliling Medan hari ini",
-    "Tutorial Visual Studio Code untuk pemula"
-];
+    const DATA = [
+        "https://www.bing.com/search?q=Berita+Medan+Tembung",
+        "https://www.bing.com/search?q=Harga+Emas+Antam+Medan",
+        "https://www.bing.com/search?q=Metode+AHP+Manual",
+        "https://www.bing.com/search?q=Skripsi+Sistem+Informasi",
+        "https://www.bing.com/search?q=Wisata+Sumatera+Utara",
+        "https://www.msn.com/id-id/berita/other/ar-AA22WWCR",
+        "https://www.msn.com/id-id/hiburan/berita/ar-AA22Y4xE",
+        "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8",
+        "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22XAhc",
+        "https://www.msn.com/id-id/berita/other/ar-AA22Upk5"
+    ];
 
-const ARTICLES = [
-    "https://www.msn.com/id-id/berita/other/ar-AA22WWCR",
-    "https://www.msn.com/id-id/hiburan/berita/ar-AA22Y4xE",
-    "https://www.msn.com/id-id/berita/other/ar-AA22S081",
-    "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8",
-    "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22XAhc",
-    "https://www.msn.com/id-id/berita/other/ar-AA22Upk5",
-    "https://www.msn.com/id-id/berita/other/ar-AA22XbnI",
-    "https://www.msn.com/id-id/berita/other/ar-AA22WXg1",
-    "https://www.msn.com/id-id/berita/other/ar-AA21JK92",
-    "https://www.msn.com/id-id/hiburan/berita/ar-AA22XNTb",
-    "https://www.msn.com/id-id/berita/other/ar-AA22RHnA",
-    "https://www.msn.com/id-id/ekonomi/other/ar-AA22Txxu",
-    "https://www.msn.com/id-id/berita/nasional/ar-AA22UJRX",
-    "https://www.msn.com/id-id/berita/other/ar-AA22XlBH",
-    "https://www.msn.com/id-id/berita/other/ar-AA1Vuwsr",
-    "https://www.msn.com/id-id/berita/other/ar-AA22T5B9",
-    "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22UlQy",
-    "https://www.msn.com/id-id/berita/other/ar-AA22X7gM",
-    "https://www.msn.com/id-id/berita/nasional/ar-AA22U9z1",
-    "https://www.msn.com/id-id/berita/other/ar-AA22W8L9"
-];
+    let index = 0;
 
-    let step = 0;
-    const totalTasks = 29;
-    let botRunning = false;
-
-    function startBot() {
-        if (botRunning) return;
-        botRunning = true;
-        document.getElementById('start-btn').innerText = "ENGINE SEDANG BERJALAN...";
-        document.getElementById('start-btn').style.background = "#da3633";
-        document.getElementById('start-btn').style.color = "#fff";
-        runTask();
+    function jalankan() {
+        document.getElementById('btn').style.display = "none";
+        mulaiTugas();
     }
 
-    function runTask() {
-        if (step >= totalTasks) {
-            document.getElementById('msg').innerText = "MISI SELESAI!";
-            alert("Misi Sukses, San!");
-            location.reload();
+    function mulaiTugas() {
+        if (index >= DATA.length) {
+            document.getElementById('text').innerText = "MISI SELESAI!";
+            alert("Poin Aman, San!");
             return;
         }
 
-        let frame = document.getElementById('content-frame');
-        let url = "";
+        let frame = document.getElementById('content-area');
+        let target = DATA[index];
 
-        if (step < 10) {
-            let kw = KEYWORDS[step % KEYWORDS.length];
-            url = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
-            document.getElementById('msg').innerText = `🔎 MENCARI: ${kw}`;
-        } else {
-            let idx = step - 10;
-            url = ARTICLES[idx % ARTICLES.length];
-            document.getElementById('msg').innerText = `📖 MEMBACA BERITA...`;
-        }
+        document.getElementById('text').innerText = `PROSES TUGAS ${index + 1}...`;
+        document.getElementById('fill').style.width = ((index + 1) / DATA.length * 100) + "%";
 
-        // Update UI Dashboard
-        step++;
-        document.getElementById('info').innerText = `Tugas: ${step} / ${totalTasks}`;
-        document.getElementById('fill').style.width = (step / totalTasks * 100) + "%";
-
-        // Tembak URL ke dalam Iframe Sandboxed
-        frame.src = url;
-
-        // Jeda 12 detik sebelum ganti halaman otomatis
-        setTimeout(runTask, 12000);
+        // Trik: Load about:blank dulu buat 'membersihkan' sisa script MSN
+        frame.src = "about:blank";
+        
+        setTimeout(() => {
+            frame.src = target;
+            index++;
+            // Paksa bot pindah tugas tiap 5 detik (5000ms)
+            setTimeout(mulaiTugas, 5000);
+        }, 200); // Jeda tipis buat refresh frame
     }
 </script>
-
 </body>
 </html>
