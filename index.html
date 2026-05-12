@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAN PUNYA - No PopUp Engine</title>
+    <style>
+        :root {
+            --primary: #00f2ff;
+            --accent: #7000ff;
+            --bg: #0d1117;
+            --card: #161b22;
+            --text: #c9d1d9;
+        }
+        body { 
+            background: var(--bg); color: var(--text); 
+            font-family: 'Segoe UI', sans-serif; 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; margin: 0; padding: 20px;
+        }
+        .container { 
+            width: 100%; max-width: 450px; background: var(--card);
+            padding: 30px; border-radius: 24px; text-align: center;
+            border: 1px solid #30363d; box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        h2 { color: var(--primary); margin: 0; letter-spacing: 2px; }
+        .tagline { font-size: 11px; color: #8b949e; margin-bottom: 25px; text-transform: uppercase; }
+
+        .config-grid { 
+            display: grid; grid-template-columns: 1fr 1fr; gap: 15px; 
+            margin-bottom: 25px; background: rgba(255,255,255,0.03);
+            padding: 15px; border-radius: 15px;
+        }
+        .input-group { display: flex; flex-direction: column; text-align: left; }
+        label { font-size: 10px; font-weight: bold; color: var(--primary); margin-bottom: 5px; }
+        input { 
+            background: #010409; border: 1px solid #30363d; 
+            color: white; padding: 10px; border-radius: 8px; outline: none;
+        }
+
+        .status-panel { 
+            background: #010409; padding: 20px; border-radius: 15px; 
+            margin-bottom: 25px; border: 1px solid #21262d;
+        }
+        .current-task { font-size: 13px; color: #fff; margin-bottom: 10px; min-height: 18px; }
+        .bar-bg { background: #30363d; height: 8px; border-radius: 4px; overflow: hidden; }
+        .bar-fill { background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; height: 100%; transition: 0.5s; }
+        
+        button { 
+            width: 100%; padding: 16px; font-weight: bold; cursor: pointer; 
+            border-radius: 12px; border: none; background: var(--primary); color: #000;
+            text-transform: uppercase; margin-bottom: 10px;
+        }
+        #stop-btn { background: #da3633; color: white; display: none; }
+
+        .note { font-size: 10px; color: #484f58; margin-top: 15px; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ISAN PUNYA</h2>
+    <div class="tagline">No Pop-Up Engine v3.0</div>
+
+    <div class="config-grid" id="ui-config">
+        <div class="input-group"><label>JUMLAH CARI</label><input type="number" id="s-qty" value="10"></div>
+        <div class="input-group"><label>DELAY CARI (S)</label><input type="number" id="s-del" value="7"></div>
+        <div class="input-group"><label>JUMLAH BACA</label><input type="number" id="r-qty" value="10"></div>
+        <div class="input-group"><label>DELAY BACA (S)</label><input type="number" id="r-del" value="10"></div>
+    </div>
+
+    <div class="status-panel">
+        <div id="stat-txt" class="current-task">SIAP DIJALANKAN</div>
+        <div class="bar-bg"><div id="bar" class="bar-fill"></div></div>
+        <div id="counter" style="font-size: 11px; margin-top: 10px; color: var(--primary);">0 / 0 Tasks</div>
+    </div>
+
+    <button id="start-btn">START ENGINE</button>
+    <button id="stop-btn">STOP BOT</button>
+
+    <div class="note">
+        <b>INFO:</b> Bot ini bekerja di <b>SATU TAB</b>. Dia akan otomatis pindah halaman. 
+        Jangan tutup tab saat bot bekerja.
+    </div>
+</div>
+
+<script>
+    const KEYWORDS = ["Berita Medan", "AHP GIS Medan Tembung", "Wisata Sumut", "Harga Emas", "Teknologi 2026", "Informasi Sistem"];
+    const ARTICLES = [
+        "https://www.msn.com/id-id/berita/other/ar-AA22WWCR",
+        "https://www.msn.com/id-id/hiburan/berita/ar-AA22Y4xE",
+        "https://www.msn.com/id-id/berita/other/ar-AA22S081",
+        "https://www.msn.com/id-id/ekonomi/bisnis/ar-AA22Y8H8",
+        "https://www.msn.com/id-id/ekonomi/ekonomi/ar-AA22XAhc"
+    ];
+
+    function start() {
+        const data = {
+            active: true, phase: 'search', count: 0,
+            maxS: parseInt(document.getElementById('s-qty').value),
+            delS: parseInt(document.getElementById('s-del').value) * 1000,
+            maxR: parseInt(document.getElementById('r-qty').value),
+            delR: parseInt(document.getElementById('r-del').value) * 1000
+        };
+        localStorage.setItem('isan_bot', JSON.stringify(data));
+        run();
+    }
+
+    function run() {
+        let d = JSON.parse(localStorage.getItem('isan_bot'));
+        if (!d || !d.active) return;
+
+        if (d.phase === 'search') {
+            if (d.count < d.maxS) {
+                let kw = KEYWORDS[d.count % KEYWORDS.length];
+                d.count++;
+                localStorage.setItem('isan_bot', JSON.stringify(d));
+                window.location.href = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
+            } else {
+                d.phase = 'read'; d.count = 0;
+                localStorage.setItem('isan_bot', JSON.stringify(d));
+                setTimeout(run, 1000);
+            }
+        } else {
+            if (d.count < d.maxR) {
+                let link = ARTICLES[d.count % ARTICLES.length];
+                d.count++;
+                localStorage.setItem('isan_bot', JSON.stringify(d));
+                window.location.href = link;
+            } else {
+                localStorage.removeItem('isan_bot');
+                alert("Misi Selesai!");
+                location.reload();
+            }
+        }
+    }
+
+    function updateUI() {
+        let d = JSON.parse(localStorage.getItem('isan_bot'));
+        if(!d) return;
+        let total = d.maxS + d.maxR;
+        let curr = d.phase === 'search' ? d.count : d.maxS + d.count;
+        document.getElementById('ui-config').style.opacity = "0.3";
+        document.getElementById('ui-config').style.pointerEvents = "none";
+        document.getElementById('stat-txt').innerText = d.phase === 'search' ? "🔎 SEARCHING..." : "📖 READING...";
+        document.getElementById('counter').innerText = `${curr} / ${total} Tasks`;
+        document.getElementById('bar').style.width = (curr/total*100) + "%";
+        document.getElementById('start-btn').style.display = "none";
+        document.getElementById('stop-btn').style.display = "block";
+    }
+
+    document.getElementById('start-btn').onclick = start;
+    document.getElementById('stop-btn').onclick = () => { localStorage.removeItem('isan_bot'); location.reload(); };
+
+    window.onload = () => {
+        if (localStorage.getItem('isan_bot')) {
+            updateUI();
+            let d = JSON.parse(localStorage.getItem('isan_bot'));
+            setTimeout(run, d.phase === 'search' ? d.delS : d.delR);
+        }
+    };
+</script>
+</body>
+</html>
