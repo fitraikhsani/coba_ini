@@ -1,177 +1,107 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Bot Pencarian & Baca Artikel</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    padding: 10px;
-    background: #f0f0f0;
-  }
-  #log {
-    height: 150px;
-    overflow-y: auto;
-    background: #fff;
-    padding: 5px;
-    border: 1px solid #ccc;
-    margin-top: 10px;
-  }
-  #stat {
-    margin-top: 10px;
-    font-weight: bold;
-  }
-  #fill {
-    display: inline-block;
-    height: 20px;
-    background: #4caf50;
-    width: 0%;
-    transition: width 0.3s;
-  }
-  #cnt-text {
-    margin-left: 10px;
-  }
-  button {
-    padding: 8px 12px;
-    margin-right: 10px;
-    font-size: 16px;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISAN PUNYA - Sandbox Engine</title>
+    <style>
+        :root { --primary: #00f2ff; --bg: #0d1117; --card: #161b22; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; font-family: sans-serif; background: var(--bg); }
+
+        /* DASHBOARD DI ATAS (ANTI HILANG) */
+        #top-dashboard {
+            position: absolute; top: 0; left: 0; width: 100%; height: 160px;
+            background: var(--card); border-bottom: 2px solid var(--primary);
+            z-index: 9999; padding: 10px; box-sizing: border-box;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+        }
+
+        /* JENDELA KONTEN DI BAWAH */
+        #content-frame {
+            position: absolute; top: 160px; left: 0; width: 100%;
+            height: calc(100% - 160px); border: none; background: #fff;
+        }
+
+        h2 { color: var(--primary); margin: 0; font-size: 16px; text-align: center; font-weight: bold; }
+        
+        .status-area { background: #010409; padding: 10px; border-radius: 8px; margin-top: 10px; border: 1px solid #30363d; text-align: center; }
+        #msg { font-size: 12px; color: #fff; font-weight: bold; margin-bottom: 5px; }
+        .bar-bg { width: 100%; background: #333; height: 6px; border-radius: 3px; overflow: hidden; }
+        .bar-fill { background: var(--primary); width: 0%; height: 100%; transition: 0.5s; }
+        
+        button { width: 100%; padding: 10px; margin-top: 10px; background: var(--primary); border: none; border-radius: 6px; font-weight: bold; font-size: 12px; cursor: pointer; color: #000; }
+    </style>
 </head>
 <body>
 
-<h2>Bot Pencarian & Baca Artikel</h2>
+<div id="top-dashboard">
+    <h2>ISAN PUNYA - AUTO PILOT</h2>
+    
+    <div class="status-area">
+        <div id="msg">SIAP DIJALANKAN</div>
+        <div class="bar-bg"><div id="fill" class="bar-fill"></div></div>
+        <div id="info" style="font-size: 10px; color: var(--primary); margin-top: 5px;">Tugas: 0 / 29</div>
+    </div>
 
-<label>Jumlah Search (L): <input type="number" id="l-s" value="3" min="1" max="10"></label><br/>
-<label>Delay Search (detik): <input type="number" id="d-s" value="1" min="0" max="10"></label><br/>
-<label>Jumlah Artikel (L): <input type="number" id="l-n" value="3" min="1" max="10"></label><br/>
-<label>Delay Baca (detik): <input type="number" id="d-n" value="2" min="0" max="10"></label><br/>
-
-<button id="start-btn">Mulai</button>
-<button id="stop-btn" style="display:none;">Stop</button>
-
-<div id="stat">SYSTEM IDLE</div>
-<div style="margin-top:10px;">
-  <div id="fill"></div>
-  <span id="cnt-text">0 / 0</span>
+    <button id="start-btn" onclick="startBot()">START ENGINE</button>
 </div>
 
-<div id="log"></div>
-
-<!-- iframe untuk menjalankan proses di halaman yang sama -->
-<iframe id="worker-frame" style="width:100%; height:300px; border:1px solid #ccc; margin-top:10px;"></iframe>
+<iframe id="content-frame" sandbox="allow-scripts allow-same-origin allow-forms" src="about:blank"></iframe>
 
 <script>
-const KEYWORDS = ["Berita Medan", "AHP GIS Medan Tembung", "Wisata Sumut", "Harga Emas", "Teknologi 2026", "Mobile Legend", "bola indonesia"];
-
-const HARD_ARTICLES = [
- "https://www.msn.com/id-id/berita/other/awalnya-cuma-iseng-janjian-40-hari-syahnaz-sadiqah-ungkap-ketakutan-ini-jika-lepas-hijab/ar-AA22WWCR?ocid=hpmsn",
+    const KEYWORDS = ["Berita Medan Tembung", "Sistem Pendukung Keputusan AHP", "Wisata Sumut Terbaru", "Harga Emas Antam", "Metode SAW SPK", "Peta Kepadatan Penduduk", "Analisis Spasial GIS"];
+    const ARTICLES = [
+        "https://www.msn.com/id-id/berita/other/awalnya-cuma-iseng-janjian-40-hari-syahnaz-sadiqah-ungkap-ketakutan-ini-jika-lepas-hijab/ar-AA22WWCR?ocid=hpmsn",
         "https://www.msn.com/id-id/hiburan/berita/sinopsis-film-dokumenter-pesta-babi-viral-usai-nobarnya-dibubarkan/ar-AA22Y4xE?ocid=hpmsn",
         "https://www.msn.com/id-id/berita/other/usulan-nama-dari-ahmad-dhani-ditolak-alyssa-daguise-al-ghazali-beri-nama-soleil-zephora-ghazali/ar-AA22S081?ocid=hpmsn",
-        "https://www.msn.com/id-id/ekonomi/bisnis/purbaya-beri-waktu-6-bulan-wni-bawa-pulang-harta-dari-luar/ar-AA22Y8H8?ocid=hpmsn",
-        "https://www.msn.com/id-id/ekonomi/ekonomi/kronologi-ponpes-pati-modusi-santri-kabur-berpindah-sampai-izin-ponpes-dicabut/ar-AA22XAhc?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/nunggak-biaya-seragam-rp-300-ribu-2-siswa-ma-di-padang-dikeluarkan-dari-sekolah/ar-AA22Upk5?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/sosok-jaka-pernah-dipenjara-7-tahun-karena-bunuh-istri-kini-istri-ke-7-juga-tewas-di-tangannya/ar-AA22XbnI?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/kata-marc-marquez-usai-jalani-operasi-kaki-dan-bahu-kanan-kapan-akan-comeback/ar-AA22WXg1?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/orang-yang-semakin-cantik-secara-fisik-seiring-bertambahnya-usia-biasanya-mempraktikkan-7-kebiasaan-harian-ini-menurut-psikologi/ar-AA21JK92?ocid=hpmsn",
-        "https://www.msn.com/id-id/hiburan/berita/5-film-horor-underrated-bergaya-stephen-king-bikin-merinding/ar-AA22XNTb?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/harga-buyback-emas-antam-ubs-galeri-24-di-pegadaian-hari-ini-senin-11-mei-2026/ar-AA22RHnA?ocid=hpmsn",
-        "https://www.msn.com/id-id/ekonomi/other/purbaya-bantah-pertumbuhan-ekonomi-5-61-persen-karena-efek-basis-rendah/ar-AA22Txxu?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/bandar-judol-di-jakbar-diburu-polri-incar-sosok-bos-besar-penggerak-321-wna-di-indonesia/vi-AA22TLcO?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/nasional/sempat-terjatuh-ke-jurang-mahasiswa-itb-hilang-di-gunung-puntang-ditemukan-selamat/ar-AA22UJRX?ocid=hpmsn",
-        "https://www.msn.com/id-id/video/berita/viral-aksi-warga-halang-halangi-ambulans-di-depok-pelaku-berhasil-diamankan-polisi/vi-AA22UPGs?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/pemandu-warga-singapura-saat-gunung-dukono-erupsi-saya-ingin-sujud-di-kaki-orang-tuanya-untuk-minta-maaf/ar-AA22XlBH?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/orang-yang-selalu-mengatakan-izin-mohon-maaf-mengganggu-sebelum-meminta-sesuatu-memiliki-7-ciri-kepribadian-yang-sama-menurut-psikologi/ar-AA1Vuwsr?ocid=hpmsn",
-        "https://www.msn.com/id-id/berita/other/kronologi-pondok-pesantren-di-lampung-dibakar-massa-hingga-1-orang-diamankan-ternyata-masalah-ini-jadi-pemicunya/ar-AA22T5B9?ocid=hpmsn",
-        "https://www.msn.com/id-id/ekonomi/ekonomi/polisi-bongkar-dugaan-penadahan-ribuan-sepeda-motor-di-jaksel/ar-AA22UlQy?ocid=hpmsn"
-];
+        "https://www.msn.com/id-id/ekonomi/bisnis/purbaya-beri-waktu-6-bulan-wni-bawa-pulang-harta-dari-luar/ar-AA22Y8H8?ocid=hpmsn"
+    ];
 
-let isRunning = false;
-let worker = document.getElementById('worker-frame').contentWindow;
+    let step = 0;
+    const totalTasks = 29;
+    let botRunning = false;
 
-function addLog(m) {
-  const d = document.createElement('div');
-  d.className = 'log-entry';
-  d.innerHTML = `<span style="color:var(--primary)">[${new Date().toLocaleTimeString()}]</span> ${m}`;
-  const log = document.getElementById('log');
-  log.prepend(d);
-}
-
-async function getArticles(limit) {
-  try {
-    const r = await fetch('https://api.rss2json.com/v1/api.json?rss_url=https://www.msn.com/id-id/berita/rss');
-    const d = await r.json();
-    let links = d.items.map(i => i.link).filter(l => l.includes('/ar-') || l.includes('/vi-'));
-    if(links.length < limit) links = [...links, ...HARD_ARTICLES];
-    return links.sort(() => Math.random() - 0.5).slice(0, limit);
-  } catch(e) {
-    return HARD_ARTICLES.sort(() => Math.random() - 0.5).slice(0, limit);
-  }
-}
-
-document.getElementById('start-btn').onclick = async () => {
-  isRunning = true;
-  document.getElementById('start-btn').style.display = 'none';
-  document.getElementById('stop-btn').style.display = 'inline-block';
-  document.getElementById('log').innerHTML = "";
-  document.getElementById('stat').innerText = "MEMULAI...";
-  
-  const ls = parseInt(document.getElementById('l-s').value);
-  const ds = parseInt(document.getElementById('d-s').value) * 1000;
-  const ln = parseInt(document.getElementById('l-n').value);
-  const dn = parseInt(document.getElementById('d-n').value) * 1000;
-
-  let arts = await getArticles(ln);
-  const total = ls + arts.length;
-  let done = 0;
-
-  const iframe = document.getElementById('worker-frame');
-  iframe.src = 'about:blank'; // reset iframe
-  worker = iframe.contentWindow;
-
-  // --- PHASE 1: SEARCH ---
-  for(let i=0; i<ls; i++) {
-    if(!isRunning) break;
-    let kw = KEYWORDS[i % KEYWORDS.length];
-    document.getElementById('stat').innerHTML = `🔎 MENCARI: <span class="highlight-text">${kw}</span>`;
-    addLog(`Mencari kata kunci: <b>${kw}</b>`);
-    // navigasi di iframe
-    worker.location.href = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
-    await new Promise(r => setTimeout(r, ds));
-    done++;
-    document.getElementById('cnt-text').innerText = `${done} / ${total}`;
-    document.getElementById('fill').style.width = (done/total*100) + "%";
-  }
-
-  // --- PHASE 2: READ ---
-  if(isRunning) {
-    for(let link of arts) {
-      if(!isRunning) break;
-      const shortLink = link.split('/').pop().substring(0, 20);
-      document.getElementById('stat').innerHTML = `📖 MEMBACA: <span class="highlight-text">${shortLink}...</span>`;
-      addLog(`Membuka Artikel: ${shortLink}...`);
-      
-      worker.location.href = link;
-      await new Promise(r => setTimeout(r, dn));
-      done++;
-      document.getElementById('cnt-text').innerText = `${done} / ${total}`;
-      document.getElementById('fill').style.width = (done/total*100) + "%";
+    function startBot() {
+        if (botRunning) return;
+        botRunning = true;
+        document.getElementById('start-btn').innerText = "ENGINE SEDANG BERJALAN...";
+        document.getElementById('start-btn').style.background = "#da3633";
+        document.getElementById('start-btn').style.color = "#fff";
+        runTask();
     }
-  }
 
-  addLog("Tugas Selesai! Menutup proses...");
-  document.getElementById('start-btn').style.display = 'inline-block';
-  document.getElementById('stop-btn').style.display = 'none';
-  document.getElementById('stat').innerText = "SYSTEM IDLE";
-};
+    function runTask() {
+        if (step >= totalTasks) {
+            document.getElementById('msg').innerText = "MISI SELESAI!";
+            alert("Misi Sukses, San!");
+            location.reload();
+            return;
+        }
 
-document.getElementById('stop-btn').onclick = () => {
-  isRunning = false;
-  document.getElementById('start-btn').style.display = 'inline-block';
-  document.getElementById('stop-btn').style.display = 'none';
-  document.getElementById('stat').innerText = "Dihentikan";
-};
+        let frame = document.getElementById('content-frame');
+        let url = "";
+
+        if (step < 10) {
+            let kw = KEYWORDS[step % KEYWORDS.length];
+            url = `https://www.bing.com/search?q=${encodeURIComponent(kw)}`;
+            document.getElementById('msg').innerText = `🔎 MENCARI: ${kw}`;
+        } else {
+            let idx = step - 10;
+            url = ARTICLES[idx % ARTICLES.length];
+            document.getElementById('msg').innerText = `📖 MEMBACA BERITA...`;
+        }
+
+        // Update UI Dashboard
+        step++;
+        document.getElementById('info').innerText = `Tugas: ${step} / ${totalTasks}`;
+        document.getElementById('fill').style.width = (step / totalTasks * 100) + "%";
+
+        // Tembak URL ke dalam Iframe Sandboxed
+        frame.src = url;
+
+        // Jeda 12 detik sebelum ganti halaman otomatis
+        setTimeout(runTask, 12000);
+    }
 </script>
 
 </body>
